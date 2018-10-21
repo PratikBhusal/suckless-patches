@@ -1,0 +1,31 @@
+From bca9e2b904e6279d2e8cc74171a268e9171892eb Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Sun, 21 Oct 2018 14:02:23 -0500
+Subject: [PATCH] Added image navigation wrapping
+
+---
+ commands.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/commands.c b/commands.c
+index f685bc0..7b8d800 100644
+--- a/commands.c
++++ b/commands.c
+@@ -275,10 +275,10 @@ bool ci_navigate(arg_t n)
+ 	if (prefix > 0)
+ 		n *= prefix;
+ 	n += fileidx;
+-	if (n < 0)
+-		n = 0;
+-	if (n >= filecnt)
+-		n = filecnt - 1;
++	n = n % filecnt;
++	if (n < 0) {
++	    n += filecnt;
++	}
+ 
+ 	if (n != fileidx) {
+ 		load_image(n);
+-- 
+2.17.1
+

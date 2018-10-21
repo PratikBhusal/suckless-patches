@@ -1,0 +1,86 @@
+From 69257581e9d560a8a264a3554e4e28f0328fa2b1 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Sun, 21 Oct 2018 16:51:51 -0500
+Subject: [PATCH 1/2] Implemented thumbnail mode navigation wrapping
+
+---
+ thumbs.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/thumbs.c b/thumbs.c
+index c389b39..85e46c8 100644
+--- a/thumbs.c
++++ b/thumbs.c
+@@ -507,27 +507,26 @@ void tns_highlight(tns_t *tns, int n, bool hl)
+ 
+ bool tns_move_selection(tns_t *tns, direction_t dir, int cnt)
+ {
+-	int old, max;
+-
+-	old = *tns->sel;
++	int old = *tns->sel;
+ 	cnt = cnt > 1 ? cnt : 1;
+ 
+ 	switch (dir) {
+ 		case DIR_UP:
+-			*tns->sel = MAX(*tns->sel - cnt * tns->cols, *tns->sel % tns->cols);
++			*tns->sel = (old - cnt * tns->cols) % *tns->cnt;
+ 			break;
+ 		case DIR_DOWN:
+-			max = tns->cols * ((*tns->cnt - 1) / tns->cols) +
+-			      MIN((*tns->cnt - 1) % tns->cols, *tns->sel % tns->cols);
+-			*tns->sel = MIN(*tns->sel + cnt * tns->cols, max);
++			*tns->sel = (old + cnt * tns->cols) % *tns->cnt;
+ 			break;
+ 		case DIR_LEFT:
+-			*tns->sel = MAX(*tns->sel - cnt, 0);
++			*tns->sel = (old - cnt) % *tns->cnt;
+ 			break;
+ 		case DIR_RIGHT:
+-			*tns->sel = MIN(*tns->sel + cnt, *tns->cnt - 1);
++			*tns->sel = (old + cnt) % *tns->cnt;
+ 			break;
+ 	}
++	if (*tns->sel < 0) {
++	    *tns->sel += *tns->cnt;
++	}
+ 
+ 	if (*tns->sel != old) {
+ 		tns_highlight(tns, old, false);
+-- 
+2.17.1
+
+
+From 24520af28b086d739bc08cd146552b4fe1c7a830 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Sun, 21 Oct 2018 21:37:53 -0500
+Subject: [PATCH 2/2] Added documentation for tns_move_selection()
+
+---
+ thumbs.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/thumbs.c b/thumbs.c
+index 85e46c8..db267b4 100644
+--- a/thumbs.c
++++ b/thumbs.c
+@@ -505,6 +505,16 @@ void tns_highlight(tns_t *tns, int n, bool hl)
+ 	}
+ }
+ 
++/**
++ * @brief In thumbnail mode, navigate up, down, left, or right.
++ *
++ * @param tns[in, out] The thumbnail instance's information.
++ * @param dir[in]      The direction to move. Can be DIR_UP, DIR_DOWN, DIR_LEFT,
++ *                     or DIR_RIGHT.
++ * @param cnt[in]      The amount to move in a specific direction.
++ *
++ * @return Whetheher or not the amount moved goes to a different image.
++ */
+ bool tns_move_selection(tns_t *tns, direction_t dir, int cnt)
+ {
+ 	int old = *tns->sel;
+-- 
+2.17.1
+
