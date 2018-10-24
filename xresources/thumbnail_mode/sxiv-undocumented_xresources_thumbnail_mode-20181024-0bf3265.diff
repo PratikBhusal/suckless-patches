@@ -1,0 +1,54 @@
+From aad3e1865fb68d6e8fa903cd7466de2f9a90d5e3 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Wed, 24 Oct 2018 15:24:29 -0500
+Subject: [PATCH] Init thumbnail mode configs from ~/.Xresources file
+
+The following setitngs from config.h can now be loaded from your
+Xresources config file:
+
+THUMB_SIZE ( default: sxiv.defaultThumbnailSize )
+
+Note: you do need to get a new copy of config.h as this patch modifies
+config.def.h
+---
+ config.def.h | 11 ++++++++++-
+ thumbs.c     |  1 +
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/config.def.h b/config.def.h
+index 2d13cf4..68dc383 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -87,7 +87,16 @@ static bool ALPHA_LAYER = false;
+ static const int thumb_sizes[] = { 32, 64, 96, 128, 160 };
+ 
+ /* thumbnail size at startup, index into thumb_sizes[]: */
+-static const int THUMB_SIZE = 3;
++static int THUMB_SIZE = 3;
++
++/*
++ * Xresources preference(s) for thumbnail mode settings to load at startup
++ */
++#ifdef _XRESOURCES_CONFIG
++    static const ResourcePref thumbs_resources[] = {
++        { "defaultThumbnailSize", INT, &THUMB_SIZE },
++    };
++#endif /* _XRESOURCES_CONFIG */
+ 
+ #endif
+ #ifdef _MAPPINGS_CONFIG
+diff --git a/thumbs.c b/thumbs.c
+index c389b39..a917578 100644
+--- a/thumbs.c
++++ b/thumbs.c
+@@ -145,6 +145,7 @@ void tns_clean_cache(tns_t *tns)
+ void tns_init(tns_t *tns, fileinfo_t *files, const int *cnt, int *sel,
+               win_t *win)
+ {
++	init_xresources( win->env.dpy, thumbs_resources, ARRLEN(thumbs_resources) );
+ 	int len;
+ 	const char *homedir, *dsuffix = "";
+ 
+-- 
+2.17.1
+

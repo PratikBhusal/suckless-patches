@@ -1,0 +1,137 @@
+From 378205991971e09878cebb4da4b98472a6d4a0f9 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Wed, 24 Oct 2018 15:15:45 -0500
+Subject: [PATCH] Setup sxiv to allow loading from the Xresources file
+
+Note: this does not do anything on its own. You must install the
+additional patches for full functionality.
+---
+ Makefile          |  2 +-
+ sxiv.h            | 24 +++++++++++++++++
+ xresources_init.c | 67 +++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 92 insertions(+), 1 deletion(-)
+ create mode 100644 xresources_init.c
+
+diff --git a/Makefile b/Makefile
+index fbcafd6..a2922c1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -27,7 +27,7 @@ ldlibs = $(LDLIBS) -lImlib2 -lX11 -lXft -lfontconfig \
+   $(lib_exif_$(HAVE_LIBEXIF)) $(lib_gif_$(HAVE_GIFLIB))
+ 
+ objs = autoreload_$(AUTORELOAD).o commands.o image.o main.o options.o \
+-  thumbs.o util.o window.o
++  thumbs.o util.o window.o xresources_init.o
+ 
+ all: sxiv
+ 
+diff --git a/sxiv.h b/sxiv.h
+index 757674e..46fa780 100644
+--- a/sxiv.h
++++ b/sxiv.h
+@@ -450,5 +450,29 @@ void win_set_title(win_t*, const char*);
+ void win_set_cursor(win_t*, cursor_t);
+ void win_cursor_pos(win_t*, int*, int*);
+ 
++
++/* Xresources Patch: xresources_init.c */
++#include <X11/Xresource.h>
++
++#ifndef _XRESOURCES_CONFIG
++    #define _XRESOURCES_CONFIG
++#endif /* _XRESOURCES_CONFIG */
++
++typedef enum resource_type {
++	STRING = 0,
++        INT = 1,
++        BOOL = 2,
++        DOUBLE = 3
++} resource_type;
++
++typedef struct {
++	const char *name;
++	const resource_type type;
++	const void *dst;
++} ResourcePref;
++
++void init_xresources(Display *, const ResourcePref [], size_t);
++void get_xresource(XrmDatabase, const char*, resource_type, const void*);
++
+ #endif /* SXIV_H */
+ 
+diff --git a/xresources_init.c b/xresources_init.c
+new file mode 100644
+index 0000000..65663bb
+--- /dev/null
++++ b/xresources_init.c
+@@ -0,0 +1,67 @@
++#include "sxiv.h"
++#ifdef _XRESOURCES_CONFIG
++#include "ctype.h"
++#include "config.h"
++#include <X11/Xresource.h>
++
++void get_xresource(const XrmDatabase db, const char* rsc, const resource_type rtype, const void* dst)
++{
++	char fullname[256];
++	snprintf(fullname, sizeof(fullname), "%s.%s",
++		options->res_name != NULL ? options->res_name : "sxiv", rsc);
++	fullname[sizeof(fullname) - 1] = '\0';
++
++	char *type;
++	XrmValue ret;
++	XrmGetResource(db, fullname, "Sxiv", &type, &ret);
++	if (ret.addr == NULL || strncmp("String", type, 64)) {
++		return;
++        }
++
++	switch (rtype) {
++		case STRING:
++		    *( (char**)dst ) = ret.addr;
++		    break;
++                case INT:
++                    *( (int*)dst ) = strtoul(ret.addr, NULL, 10);
++                    break;
++                case BOOL:
++                    *( (bool*)dst ) = (ret.addr[0] == '1') || ( tolower(ret.addr[0] == 't') );
++                    break;
++                case DOUBLE:
++                    *( (double*)dst ) = strtod(ret.addr, NULL);
++                    break;
++	}
++}
++
++void init_xresources(Display *dpy, const ResourcePref resources[], size_t size) {
++	XrmInitialize();
++
++	const char *resource_manager = XResourceManagerString(dpy);
++	if (resource_manager == NULL) {
++		free((char*)resource_manager);
++		resource_manager = NULL;
++		return;
++	}
++
++	const XrmDatabase db = XrmGetStringDatabase(resource_manager);
++
++	/*  Free resource_manager? */
++	/*
++	free((char*)resource_manager);
++	resource_manager = NULL;
++	*/
++
++	if (db == NULL) {
++		return;
++        }
++
++	const ResourcePref *p;
++	for (p = resources; p < resources + size; p++) {
++	    get_xresource(db, p->name, p->type, p->dst);
++	}
++	/* p = NULL; */ /* Set p to NULL before function's end? */
++	/* free(db); */ /* Free db? */
++}
++
++#endif
+-- 
+2.17.1
+
