@@ -1,4 +1,4 @@
-From ccc263d1d9a58a0161d4ea98565deb9c59123b3a Mon Sep 17 00:00:00 2001
+From c19498b629bfb7e50001b8e773a664bce8edf7d1 Mon Sep 17 00:00:00 2001
 From: PratikBhusal <PratikBhusal@users.noreply.github.com>
 Date: Wed, 24 Oct 2018 15:19:44 -0500
 Subject: [PATCH] Init window configs from ~/.Xresources file
@@ -7,11 +7,11 @@ The following setitngs from config.h can now be loaded from your
 Xresources config file:
 
 BAR_FONT     ( default: sxiv.font )
-WIN_BG_COLOR ( default: sxiv.background )
-WIN_FS_COLOR ( default: sxiv.fsColor )
-SEL_COLOR    ( default: sxiv.selColor )
-BAR_BG_COLOR ( default: sxiv.barBackground )
-BAR_FG_COLOR ( default: sxiv.barForeground )
+WIN_BG_COLOR ( default: sxiv.backgroundColor )
+WIN_FS_COLOR ( default: sxiv.fullScreenColor )
+SEL_COLOR    ( default: sxiv.thumbnailSelectColor )
+BAR_BG_COLOR ( default: sxiv.barBackgroundColor )
+BAR_FG_COLOR ( default: sxiv.barForegroundColor )
 
 Note: you do need to get a new copy of config.h as this patch modifies
 config.def.h
@@ -21,7 +21,7 @@ config.def.h
  2 files changed, 22 insertions(+), 6 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 58e728e..7d48c6c 100644
+index 9df5697..d016104 100644
 --- a/config.def.h
 +++ b/config.def.h
 @@ -9,16 +9,30 @@ enum {
@@ -50,12 +50,12 @@ index 58e728e..7d48c6c 100644
 + */
 +#ifdef _XRESOURCES_CONFIG
 +    static const ResourcePref win_resources[] = {
-+        { "font",          STRING, &BAR_FONT     },
-+        { "background",    STRING, &WIN_BG_COLOR },
-+        { "fsColor",       STRING, &WIN_FS_COLOR },
-+        { "selColor",      STRING, &SEL_COLOR    },
-+        { "barBackground", STRING, &BAR_BG_COLOR },
-+        { "barForeground", STRING, &BAR_FG_COLOR },
++        { "font",                 STRING, &BAR_FONT     },
++        { "backgroundColor",      STRING, &WIN_BG_COLOR },
++        { "fullScreenColor",      STRING, &WIN_FS_COLOR },
++        { "thumbnailSelectColor", STRING, &SEL_COLOR    },
++        { "barBackgroundColor",   STRING, &BAR_BG_COLOR },
++        { "barForegroundColor",   STRING, &BAR_FG_COLOR },
 +    };
 +#endif /* _XRESOURCES_CONFIG */
  

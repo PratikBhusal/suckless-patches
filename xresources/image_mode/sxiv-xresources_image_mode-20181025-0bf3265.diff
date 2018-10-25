@@ -1,4 +1,4 @@
-From 8f8d7124567d2d4beca0ae06335aa2ec927a559a Mon Sep 17 00:00:00 2001
+From 007620e1633a7e79482c29c9b89942206c8d6628 Mon Sep 17 00:00:00 2001
 From: PratikBhusal <PratikBhusal@users.noreply.github.com>
 Date: Wed, 24 Oct 2018 15:23:33 -0500
 Subject: [PATCH] Init image mode configs from ~/.Xresources file
@@ -6,24 +6,24 @@ Subject: [PATCH] Init image mode configs from ~/.Xresources file
 The following setitngs from config.h can now be loaded from your
 Xresources config file:
 
-GAMMA_MAX ( default: sxiv.maxGamma )
+GAMMA_MAX ( default: sxiv.gammaMax )
 GAMMA_RANGE ( default: sxiv.gammaRange )
 PAN_FRACTION ( default: sxiv.panFraction )
 ANTI_ALIAS ( default: sxiv.enableAntiAlias )
-ALPHA_LAYER ( default: sxiv.starAlphaLayer )
+ALPHA_LAYER ( default: sxiv.startWithAlphaLayer )
 
 Note: you do need to get a new copy of config.h as this patch modifies
 config.def.h
 ---
  config.def.h | 23 ++++++++++++++++++-----
- image.c      |  8 +++++---
- 2 files changed, 23 insertions(+), 8 deletions(-)
+ image.c      |  2 ++
+ 2 files changed, 20 insertions(+), 5 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 7d48c6c..2d13cf4 100644
+index 58e728e..9df5697 100644
 --- a/config.def.h
 +++ b/config.def.h
-@@ -51,21 +51,34 @@ enum { SLIDESHOW_DELAY = 5 };
+@@ -37,21 +37,34 @@ enum { SLIDESHOW_DELAY = 5 };
  /* gamma correction: the user-visible ranges [-GAMMA_RANGE, 0] and
   * (0, GAMMA_RANGE] are mapped to the ranges [0, 1], and (1, GAMMA_MAX].
   * */
@@ -53,39 +53,29 @@ index 7d48c6c..2d13cf4 100644
 + */
 +#ifdef _XRESOURCES_CONFIG
 +    static const ResourcePref image_resources[] = {
-+        { "maxGamma",        DOUBLE, &GAMMA_MAX    },
-+        { "gammaRange",      INT,    &GAMMA_RANGE  },
-+        { "panFraction",     INT,    &PAN_FRACTION },
-+        { "enableAntiAlias", BOOL,   &ANTI_ALIAS   },
-+        { "starAlphaLayer",  BOOL,   &ALPHA_LAYER  },
++        { "gammaMax",            DOUBLE, &GAMMA_MAX    },
++        { "gammaRange",          INT,    &GAMMA_RANGE  },
++        { "panFraction",         INT,    &PAN_FRACTION },
++        { "enableAntiAlias",     BOOL,   &ANTI_ALIAS   },
++        { "startWithAlphaLayer", BOOL,   &ALPHA_LAYER  },
 +    };
 +#endif /* _XRESOURCES_CONFIG */
  
  #endif
  #ifdef _THUMBS_CONFIG
 diff --git a/image.c b/image.c
-index 1230750..b24ce4c 100644
+index 1230750..930d199 100644
 --- a/image.c
 +++ b/image.c
-@@ -46,13 +46,15 @@ static int zoomdiff(img_t *img, float z)
+@@ -46,6 +46,8 @@ static int zoomdiff(img_t *img, float z)
  
  void img_init(img_t *img, win_t *win)
  {
--	zoom_min = zoom_levels[0] / 100.0;
--	zoom_max = zoom_levels[ARRLEN(zoom_levels) - 1] / 100.0;
--
- 	imlib_context_set_display(win->env.dpy);
- 	imlib_context_set_visual(win->env.vis);
- 	imlib_context_set_colormap(win->env.cmap);
- 
 +	init_xresources(win->env.dpy, image_resources, ARRLEN(image_resources));
 +
-+	zoom_min = zoom_levels[0] / 100.0;
-+	zoom_max = zoom_levels[ARRLEN(zoom_levels) - 1] / 100.0;
-+
- 	img->im = NULL;
- 	img->win = win;
- 	img->scalemode = options->scalemode;
+ 	zoom_min = zoom_levels[0] / 100.0;
+ 	zoom_max = zoom_levels[ARRLEN(zoom_levels) - 1] / 100.0;
+ 
 -- 
 2.17.1
 
