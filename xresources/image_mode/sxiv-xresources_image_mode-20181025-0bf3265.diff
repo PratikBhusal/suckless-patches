@@ -1,4 +1,4 @@
-From 007620e1633a7e79482c29c9b89942206c8d6628 Mon Sep 17 00:00:00 2001
+From bafbc064650f9796949cd38c3906a511daefefc1 Mon Sep 17 00:00:00 2001
 From: PratikBhusal <PratikBhusal@users.noreply.github.com>
 Date: Wed, 24 Oct 2018 15:23:33 -0500
 Subject: [PATCH] Init image mode configs from ~/.Xresources file
@@ -16,8 +16,8 @@ Note: you do need to get a new copy of config.h as this patch modifies
 config.def.h
 ---
  config.def.h | 23 ++++++++++++++++++-----
- image.c      |  2 ++
- 2 files changed, 20 insertions(+), 5 deletions(-)
+ image.c      |  4 ++++
+ 2 files changed, 22 insertions(+), 5 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
 index 58e728e..9df5697 100644
@@ -64,14 +64,16 @@ index 58e728e..9df5697 100644
  #endif
  #ifdef _THUMBS_CONFIG
 diff --git a/image.c b/image.c
-index 1230750..930d199 100644
+index 1230750..47946c6 100644
 --- a/image.c
 +++ b/image.c
-@@ -46,6 +46,8 @@ static int zoomdiff(img_t *img, float z)
+@@ -46,6 +46,10 @@ static int zoomdiff(img_t *img, float z)
  
  void img_init(img_t *img, win_t *win)
  {
-+	init_xresources(win->env.dpy, image_resources, ARRLEN(image_resources));
++        #ifdef _XRESOURCES_CONFIG
++            init_xresources(win->env.dpy, image_resources, ARRLEN(image_resources));
++        #endif /* _XRESOURCES_CONFIG */
 +
  	zoom_min = zoom_levels[0] / 100.0;
  	zoom_max = zoom_levels[ARRLEN(zoom_levels) - 1] / 100.0;

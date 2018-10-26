@@ -1,4 +1,4 @@
-From aad3e1865fb68d6e8fa903cd7466de2f9a90d5e3 Mon Sep 17 00:00:00 2001
+From 681f5666548f1f25e164aa8424aa5c409f2d7aa6 Mon Sep 17 00:00:00 2001
 From: PratikBhusal <PratikBhusal@users.noreply.github.com>
 Date: Wed, 24 Oct 2018 15:24:29 -0500
 Subject: [PATCH] Init thumbnail mode configs from ~/.Xresources file
@@ -12,14 +12,14 @@ Note: you do need to get a new copy of config.h as this patch modifies
 config.def.h
 ---
  config.def.h | 11 ++++++++++-
- thumbs.c     |  1 +
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ thumbs.c     |  3 +++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/config.def.h b/config.def.h
-index 2d13cf4..68dc383 100644
+index 58e728e..84662a6 100644
 --- a/config.def.h
 +++ b/config.def.h
-@@ -87,7 +87,16 @@ static bool ALPHA_LAYER = false;
+@@ -60,7 +60,16 @@ static const bool ALPHA_LAYER = false;
  static const int thumb_sizes[] = { 32, 64, 96, 128, 160 };
  
  /* thumbnail size at startup, index into thumb_sizes[]: */
@@ -38,14 +38,16 @@ index 2d13cf4..68dc383 100644
  #endif
  #ifdef _MAPPINGS_CONFIG
 diff --git a/thumbs.c b/thumbs.c
-index c389b39..a917578 100644
+index c389b39..51a63ff 100644
 --- a/thumbs.c
 +++ b/thumbs.c
-@@ -145,6 +145,7 @@ void tns_clean_cache(tns_t *tns)
+@@ -145,6 +145,9 @@ void tns_clean_cache(tns_t *tns)
  void tns_init(tns_t *tns, fileinfo_t *files, const int *cnt, int *sel,
                win_t *win)
  {
-+	init_xresources( win->env.dpy, thumbs_resources, ARRLEN(thumbs_resources) );
++	#ifdef _XRESOURCES_CONFIG
++	    init_xresources( win->env.dpy, thumbs_resources, ARRLEN(thumbs_resources) );
++	#endif /* _XRESOURCES_CONFIG */
  	int len;
  	const char *homedir, *dsuffix = "";
  

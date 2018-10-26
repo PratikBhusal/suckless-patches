@@ -1,4 +1,4 @@
-From c19498b629bfb7e50001b8e773a664bce8edf7d1 Mon Sep 17 00:00:00 2001
+From a0f17ab50afd14261f2d187a96ffbb1c56d7bad8 Mon Sep 17 00:00:00 2001
 From: PratikBhusal <PratikBhusal@users.noreply.github.com>
 Date: Wed, 24 Oct 2018 15:19:44 -0500
 Subject: [PATCH] Init window configs from ~/.Xresources file
@@ -17,11 +17,11 @@ Note: you do need to get a new copy of config.h as this patch modifies
 config.def.h
 ---
  config.def.h | 26 ++++++++++++++++++++------
- window.c     |  2 ++
- 2 files changed, 22 insertions(+), 6 deletions(-)
+ window.c     |  4 ++++
+ 2 files changed, 24 insertions(+), 6 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 9df5697..d016104 100644
+index 58e728e..5a4a07b 100644
 --- a/config.def.h
 +++ b/config.def.h
 @@ -9,16 +9,30 @@ enum {
@@ -62,14 +62,16 @@ index 9df5697..d016104 100644
  #endif
  #ifdef _IMAGE_CONFIG
 diff --git a/window.c b/window.c
-index 2ed33ca..03a58cd 100644
+index 2ed33ca..bd0970e 100644
 --- a/window.c
 +++ b/window.c
-@@ -122,6 +122,8 @@ void win_init(win_t *win)
+@@ -122,6 +122,10 @@ void win_init(win_t *win)
  	if (setlocale(LC_CTYPE, "") == NULL || XSupportsLocale() == 0)
  		error(0, 0, "No locale support");
  
-+	init_xresources(e->dpy, win_resources, ARRLEN(win_resources));
++	#ifdef _XRESOURCES_CONFIG
++		init_xresources(e->dpy, win_resources, ARRLEN(win_resources));
++	#endif /* _XRESOURCES_CONFIG */
 +
  	win_init_font(e, BAR_FONT);
  
