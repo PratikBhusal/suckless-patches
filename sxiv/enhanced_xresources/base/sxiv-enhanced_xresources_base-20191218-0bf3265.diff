@@ -1,0 +1,155 @@
+From 0f60846df99b85574e0c9ff7e95fd05363ac0b33 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Tue, 17 Dec 2019 23:59:34 -0600
+Subject: [PATCH] Enabled option to load from Xresources configs
+
+Note: this does not do anything on its own. You must install the
+additional patches for full functionality.
+---
+ Makefile     |  2 +-
+ config.def.h |  2 ++
+ window.c     |  4 ++++
+ xresources.c | 61 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ xresources.h | 24 +++++++++++++++++++++
+ 5 files changed, 92 insertions(+), 1 deletion(-)
+ create mode 100644 xresources.c
+ create mode 100644 xresources.h
+
+diff --git a/Makefile b/Makefile
+index fbcafd6..b2f6f83 100644
+--- a/Makefile
++++ b/Makefile
+@@ -27,7 +27,7 @@ ldlibs = $(LDLIBS) -lImlib2 -lX11 -lXft -lfontconfig \
+   $(lib_exif_$(HAVE_LIBEXIF)) $(lib_gif_$(HAVE_GIFLIB))
+ 
+ objs = autoreload_$(AUTORELOAD).o commands.o image.o main.o options.o \
+-  thumbs.o util.o window.o
++  thumbs.o util.o window.o xresources.o
+ 
+ all: sxiv
+ 
+diff --git a/config.def.h b/config.def.h
+index 58e728e..f8f1df5 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -1,3 +1,5 @@
++#include "xresources.h"
++
+ #ifdef _WINDOW_CONFIG
+ 
+ /* default window dimensions (overwritten via -g option): */
+diff --git a/window.c b/window.c
+index 2ed33ca..a02bb7e 100644
+--- a/window.c
++++ b/window.c
+@@ -122,6 +122,10 @@ void win_init(win_t *win)
+ 	if (setlocale(LC_CTYPE, "") == NULL || XSupportsLocale() == 0)
+ 		error(0, 0, "No locale support");
+ 
++	#ifdef _XRESOURCES_CONFIG
++		init_xresources(e->dpy);
++	#endif
++
+ 	win_init_font(e, BAR_FONT);
+ 
+ 	win_alloc_color(e, WIN_BG_COLOR, &win->bgcol);
+diff --git a/xresources.c b/xresources.c
+new file mode 100644
+index 0000000..11fda1f
+--- /dev/null
++++ b/xresources.c
+@@ -0,0 +1,61 @@
++#include "sxiv.h"
++#include "xresources.h"
++#include <X11/Xresource.h>
++
++XrmDatabase xrm_database;
++
++void init_xresources(Display *dpy) {
++	XrmInitialize();
++	const char *resource_manager = XResourceManagerString(dpy);
++	if (resource_manager == NULL) {
++		return;
++	}
++
++	xrm_database = XrmGetStringDatabase(resource_manager);
++	resource_manager = NULL;
++}
++
++void get_xresource(const char* rsc, const resource_type rtype, const void* dst)
++{
++	char fullname[256] = {'\0'};
++	snprintf(fullname, sizeof(fullname), "%s.%s",
++		options->res_name != NULL ? options->res_name : "sxiv", rsc);
++
++	char *type;
++	XrmValue ret;
++	XrmGetResource(xrm_database, &fullname[0], "Sxiv", &type, &ret);
++
++	if (ret.addr == NULL || type == NULL || !STREQ("String", type) ) {
++		return;
++	}
++	type = NULL;
++
++	switch (rtype) {
++		case STRING:
++			*( (char**)dst ) = ret.addr;
++			break;
++		case INT:
++			*( (int*)dst ) = strtoul(ret.addr, NULL, 10);
++			break;
++		case BOOL:
++			*( (bool*)dst ) = (ret.addr[0] == '1') ||
++							  (ret.addr[0] == 't') ||
++							  (ret.addr[0] == 'T');
++			break;
++		case DOUBLE:
++			*( (double*)dst ) = strtod(ret.addr, NULL);
++			break;
++	}
++}
++
++void get_xresources(const ResourcePref resources[], size_t size) {
++	if (xrm_database == NULL) {
++		fprintf(stderr, "database is null!\n");
++		return;
++	}
++	const ResourcePref *p;
++	for (p = resources; p < resources + size; p++) {
++		get_xresource(p->name, p->type, p->dst);
++	}
++	p = NULL;
++}
+diff --git a/xresources.h b/xresources.h
+new file mode 100644
+index 0000000..f26a82c
+--- /dev/null
++++ b/xresources.h
+@@ -0,0 +1,24 @@
++#ifndef _XRESOURCES_CONFIG
++#define _XRESOURCES_CONFIG
++#include <X11/Xresource.h>
++
++#define _XRESOURCES_WINDOW
++#define _XRESOURCES_IMAGE
++#define _XRESOURCES_THUMBS
++
++typedef enum resource_type {
++	STRING = 0,
++	INT = 1,
++	BOOL = 2,
++	DOUBLE = 3
++} resource_type;
++
++typedef struct {
++	const char *name;
++	const resource_type type;
++	const void *dst;
++} ResourcePref;
++
++void init_xresources(Display *);
++void get_xresources(const ResourcePref [], size_t);
++#endif /* _XRESOURCES_CONFIG */
+-- 
+2.24.1
+

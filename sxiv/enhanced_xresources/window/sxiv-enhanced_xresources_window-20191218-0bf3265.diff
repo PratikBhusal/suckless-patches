@@ -1,0 +1,83 @@
+From a88b0bf8bc3fbd4e932efe60eb43ab1b8945053f Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Wed, 18 Dec 2019 00:04:05 -0600
+Subject: [PATCH] Init window configs from .Xresources file
+
+The following setitngs from config.h can now be loaded from your
+Xresources config file:
+
+BAR_FONT     ( default: sxiv.font                 )
+WIN_BG_COLOR ( default: sxiv.backgroundColor      )
+WIN_FS_COLOR ( default: sxiv.fullScreenColor      )
+SEL_COLOR    ( default: sxiv.thumbnailSelectColor )
+BAR_BG_COLOR ( default: sxiv.barBackgroundColor   )
+BAR_FG_COLOR ( default: sxiv.barForegroundColor   )
+
+Note: you do need to get a new copy of config.h as this patch modifies
+config.def.h
+---
+ config.def.h | 29 +++++++++++++++++++++++------
+ window.c     |  3 +++
+ 2 files changed, 26 insertions(+), 6 deletions(-)
+
+diff --git a/config.def.h b/config.def.h
+index f8f1df5..3b5570d 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -11,16 +11,33 @@ enum {
+ /* bar font:
+  * (see fonts-conf(5) subsection "FONT NAMES" for valid values)
+  */
+-static const char * const BAR_FONT = "monospace:size=8";
++static const char * BAR_FONT = "monospace:size=8";
+
+ /* colors:
+  * (see X(7) section "COLOR NAMES" for valid values)
+  */
+-static const char * const WIN_BG_COLOR = "#555555";
+-static const char * const WIN_FS_COLOR = "#000000";
+-static const char * const SEL_COLOR    = "#EEEEEE";
+-static const char * const BAR_BG_COLOR = "#222222";
+-static const char * const BAR_FG_COLOR = "#EEEEEE";
++static const char * WIN_BG_COLOR = "#555555";
++static const char * WIN_FS_COLOR = "#000000";
++static const char * SEL_COLOR    = "#EEEEEE";
++static const char * BAR_BG_COLOR = "#222222";
++static const char * BAR_FG_COLOR = "#EEEEEE";
++
++/*
++ * Xresources preference(s) for window settings to load at startup. If you do
++ * not want to use Xresources for the Window configuration, uncomment the line
++ * below :
++ */
++/* #undef _XRESOURCES_WINDOW */
++#if defined(_XRESOURCES_CONFIG) && defined(_XRESOURCES_WINDOW)
++	static const ResourcePref win_resources[] = {
++		{ "font",                 STRING, &BAR_FONT     },
++		{ "backgroundColor",      STRING, &WIN_BG_COLOR },
++		{ "fullScreenColor",      STRING, &WIN_FS_COLOR },
++		{ "thumbnailSelectColor", STRING, &SEL_COLOR    },
++		{ "barBackgroundColor",   STRING, &BAR_BG_COLOR },
++		{ "barForegroundColor",   STRING, &BAR_FG_COLOR },
++	};
++#endif /* _XRESOURCES_CONFIG */
+
+ #endif
+ #ifdef _IMAGE_CONFIG
+diff --git a/window.c b/window.c
+index a02bb7e..f9b3313 100644
+--- a/window.c
++++ b/window.c
+@@ -125,6 +125,9 @@ void win_init(win_t *win)
+ 	#ifdef _XRESOURCES_CONFIG
+ 		init_xresources(e->dpy);
+ 	#endif
++	#if defined(_XRESOURCES_CONFIG) && defined(_XRESOURCES_WINDOW)
++		get_xresources(win_resources, ARRLEN(win_resources));
++	#endif
+
+ 	win_init_font(e, BAR_FONT);
+
+--
+2.24.1
+

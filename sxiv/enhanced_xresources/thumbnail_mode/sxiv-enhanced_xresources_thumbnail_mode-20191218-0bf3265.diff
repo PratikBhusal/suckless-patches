@@ -1,0 +1,59 @@
+From fb30e2ae23047f9d27eac23b537a8361c4ef0114 Mon Sep 17 00:00:00 2001
+From: PratikBhusal <PratikBhusal@users.noreply.github.com>
+Date: Wed, 18 Dec 2019 01:15:20 -0600
+Subject: [PATCH] Init thumbnail mode configs from ~/.Xresources file
+
+The following setitngs from config.h can now be loaded from your
+Xresources config file:
+
+THUMB_SIZE ( default: sxiv.defaultThumbnailSize )
+
+Note: you do need to get a new copy of config.h as this patch modifies
+config.def.h
+---
+ config.def.h | 14 +++++++++++++-
+ thumbs.c     |  3 +++
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/config.def.h b/config.def.h
+index f8f1df5..b4a6729 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -62,7 +62,19 @@ static const bool ALPHA_LAYER = false;
+ static const int thumb_sizes[] = { 32, 64, 96, 128, 160 };
+ 
+ /* thumbnail size at startup, index into thumb_sizes[]: */
+-static const int THUMB_SIZE = 3;
++static int THUMB_SIZE = 3;
++
++/*
++ * Xresources preference(s) for thumbnail mode settings to load at startup. If
++ * you do not want to use Xresources for the image mode configuration, uncomment
++ * the line below:
++ */
++/* #undef _XRESOURCES_THUMBS */
++#if defined(_XRESOURCES_CONFIG) && defined(_XRESOURCES_THUMBS)
++    static const ResourcePref thumbs_resources[] = {
++        { "defaultThumbnailSize", INT, &THUMB_SIZE },
++    };
++#endif /* _XRESOURCES_CONFIG */
+ 
+ #endif
+ #ifdef _MAPPINGS_CONFIG
+diff --git a/thumbs.c b/thumbs.c
+index c389b39..04fc41b 100644
+--- a/thumbs.c
++++ b/thumbs.c
+@@ -145,6 +145,9 @@ void tns_clean_cache(tns_t *tns)
+ void tns_init(tns_t *tns, fileinfo_t *files, const int *cnt, int *sel,
+               win_t *win)
+ {
++	#if defined(_XRESOURCES_CONFIG) && defined(_XRESOURCES_THUMBS)
++		get_xresources( thumbs_resources, ARRLEN(thumbs_resources) );
++	#endif /* _XRESOURCES_CONFIG */
+ 	int len;
+ 	const char *homedir, *dsuffix = "";
+ 
+-- 
+2.24.1
+
